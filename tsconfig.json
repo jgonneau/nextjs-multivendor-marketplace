@@ -23,5 +23,13 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // The frontend is a separate Next.js app with its own tsconfig.
+    "frontend",
+    // Scratch examples, not real tests (jest doesn't match *.example.tsx
+    // either) — some reference packages (node-mocks-http) that were never
+    // installed, which would otherwise fail `next build`'s type-check.
+    "__test__/**/*.example.tsx"
+  ]
 }
