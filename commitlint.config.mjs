@@ -14,7 +14,7 @@ const config = {
     "scope-enum": [
       1,
       "always",
-      ["core", "adapters", "http", "api", "db", "docs", "frontend", "e2e", "docker", "ci", "deps"],
+      ["core", "adapters", "http", "api", "db", "docs", "frontend", "e2e", "docker", "ci", "deps", "main"],
     ],
   },
 };

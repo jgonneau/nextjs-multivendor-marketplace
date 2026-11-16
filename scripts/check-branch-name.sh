@@ -14,6 +14,9 @@ pattern="^(main|($types)/[a-z0-9._-]+)$"
 # Detached HEAD (rebases, CI checkouts): nothing to check.
 [ "$branch" = "HEAD" ] && exit 0
 
+# The release PR's branch, created by release-please (.github/workflows/release-please.yml).
+case "$branch" in release-please--*) exit 0 ;; esac
+
 if printf '%s' "$branch" | grep -Eq "$pattern"; then
   exit 0
 fi
