@@ -1,0 +1,11 @@
+# Branch naming, then a typecheck of both apps. The tests need the database,
+# so they run in CI rather than here.
+scripts/check-branch-name.sh
+
+echo "Typechecking the API…"
+pnpm exec tsc --noEmit -p .
+
+if [ -d frontend/node_modules ]; then
+  echo "Typechecking the frontend…"
+  pnpm --dir frontend exec tsc --noEmit
+fi
