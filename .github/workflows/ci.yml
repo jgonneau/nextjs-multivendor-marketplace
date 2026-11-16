@@ -1,0 +1,143 @@
+# Runs on every pull request and on every push to main.
+#
+#   conventions  commit messages (commitlint) and branch name; pull requests only
+#   api          lint, typecheck, Jest against a real PostgreSQL, production build
+#   frontend     lint, typecheck, production build, Cypress demo + landing specs
+#                (they need no API or database)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A new push to the same branch cancels the run that's still going.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  conventions:
+    name: Commit and branch conventions
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Commit messages follow Conventional Commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm exec commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+
+      - name: Branch name follows the convention
+        # Passed through env, never interpolated into the script: branch
+        # names are attacker-controlled on pull requests from forks.
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: scripts/check-branch-name.sh "$BRANCH"
+
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Real environment variables win over .env files, and CI has none:
+      # the tests rebuild this *_test database from the migrations.
+      DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nextjs_multivendor_marketplace_test?schema=public
+      AUTH_SECRET: ci-only-auth-secret
+      LOG_TOKEN_SECRET: ci-only-log-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm build
+
+      - name: Cache the Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+      # The binary isn't downloaded on install (see frontend/pnpm-workspace.yaml).
+      - run: pnpm exec cypress install
+
+      - name: Start the frontend
+        # No API in this job: the demo runs on in-browser sample data, and
+        # API calls fail fast against a closed port.
+        env:
+          PORT: "3000"
+          API_URL: http://127.0.0.1:9
+        run: |
+          pnpm start > ../frontend-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3000 && exit 0
+            sleep 1
+          done
+          echo "The frontend didn't start:" && cat ../frontend-server.log && exit 1
+
+      - name: Cypress (landing and demo)
+        run: pnpm e2e:demo
+
+      - name: Upload Cypress screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          if-no-files-found: ignore
