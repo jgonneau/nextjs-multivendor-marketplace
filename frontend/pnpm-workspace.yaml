@@ -1,0 +1,15 @@
+# Marks frontend/ as its own pnpm project, with its own lockfile, separate
+# from the API in the parent directory. Without this file pnpm would walk up
+# and use the parent's pnpm-workspace.yaml instead.
+#
+# Install scripts these packages don't need to run (swagger-ui's telemetry
+# and optional native parsers).
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+  - '@tree-sitter-grammars/tree-sitter-yaml'
+  - core-js-pure
+  - tree-sitter
+  - tree-sitter-json
+  # The Cypress binary is installed once per machine (`pnpm exec cypress install`),
+  # never inside the Docker image.
+  - cypress

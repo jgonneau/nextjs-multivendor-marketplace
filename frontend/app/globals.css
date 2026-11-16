@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f6f6fb;
+  --surface: #ffffff;
+  --surface-2: #f0f0f7;
+  --line: #e3e3ee;
+  --ink: #14141f;
+  --muted: #6a6a80;
+  --accent: #6a46f5;
+  --accent-2: #0ea597;
+  --danger: #e0434b;
+  --warn: #d98a0b;
+  --ok: #1f9d5c;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a12;
+    --surface: #12121c;
+    --surface-2: #1a1a28;
+    --line: #272738;
+    --ink: #ececf5;
+    --muted: #9696ad;
+    --accent: #8d6bff;
+    --accent-2: #2dd4bf;
+    --danger: #ff5c63;
+    --warn: #f5b23d;
+    --ok: #3ddc84;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* Shimmering placeholder while data loads. */
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--surface-2) 30%,
+    color-mix(in srgb, var(--surface-2) 40%, var(--surface)) 50%,
+    var(--surface-2) 70%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+/* Soft noise-free gradient behind the app. */
+.app-backdrop {
+  background:
+    radial-gradient(60rem 30rem at 10% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+    radial-gradient(50rem 30rem at 100% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}

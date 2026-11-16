@@ -1,0 +1,9 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+.env*
+# Cypress run artifacts
+cypress/screenshots
+cypress/videos
+cypress/downloads
