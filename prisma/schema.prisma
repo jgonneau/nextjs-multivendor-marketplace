@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  token     String?
+  role      Role     @default(USER)
+  orders    Order[]
+  vendors   Vendor[]
+  activated Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  CUSTOMER
+  VENDOR
+  ADMIN
+  SUPERADMIN
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  reference   String   @unique
+  title       String?
+  description String?
+  price       Float    @default(1)
+  inStock     Boolean  @default(true)
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  activated   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Vendor {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  phone       String?
+  address     String?
+  products    Product[]
+  orders      Order[]
+  ownerId     String
+  ownedBy     User      @relation(fields: [ownerId], references: [id])
+  activated   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Order {
+  orderId      String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  vendorId     String
+  vendor       Vendor    @relation(fields: [vendorId], references: [id])
+  productsRefs String[]
+  status       String    @default("Pending")
+  deliveryDate DateTime? @db.Date
+  invoice      Invoice?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Invoice {
+  id        String   @id @default(cuid())
+  title     String   @db.VarChar(20)
+  content   String?
+  paid      Boolean  @default(false)
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [orderId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     String   @default("debug")
+  message   String
+  timestamp String   @default("---")
+  createdAt DateTime @default(now())
+}
