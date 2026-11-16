@@ -1,0 +1,82 @@
+# Fixed project name, so containers, network and volume are named
+# nextjs-multivendor-marketplace-* whatever the checkout folder is called.
+name: nextjs-multivendor-marketplace
+
+services:
+    db:
+        image: postgres:16-alpine
+        restart: always
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-testuser}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-testpassword}
+            POSTGRES_DB: ${POSTGRES_DB:-postgres}
+        volumes:
+            - db_data:/var/lib/postgresql/data
+        ports:
+            # host:container — matches DATABASE_URL in .env for local, non-Docker
+            # tooling (prisma studio, psql, tests) that connects from the host.
+            - "5434:5432"
+        healthcheck:
+            # -d must be given explicitly: pg_isready otherwise defaults to a
+            # database named after -U, which doesn't exist here (the real
+            # database is POSTGRES_DB) and logs a harmless but noisy FATAL
+            # on every single probe.
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-testuser} -d ${POSTGRES_DB:-postgres}"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    # One-off job: applies pending migrations, then exits. Runs from the
+    # `builder` stage (still has the Prisma CLI) so the slim `api` runtime
+    # image never needs devDependencies just to migrate.
+    migrate:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: builder
+        environment:
+            DATABASE_URL: postgresql://${POSTGRES_USER:-testuser}:${POSTGRES_PASSWORD:-testpassword}@db:5432/${POSTGRES_DB:-postgres}?schema=public
+        command: ["pnpm", "db:deploy"]
+        depends_on:
+            db:
+                condition: service_healthy
+
+    # The REST API (Next.js route handlers and middleware, no pages).
+    api:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        env_file:
+            - .env
+        environment:
+            # overrides the host-facing value from .env: inside the compose
+            # network the database is reached at `db:5432`, not localhost:5434.
+            DATABASE_URL: postgresql://${POSTGRES_USER:-testuser}:${POSTGRES_PASSWORD:-testpassword}@db:5432/${POSTGRES_DB:-postgres}?schema=public
+        depends_on:
+            db:
+                condition: service_healthy
+            migrate:
+                condition: service_completed_successfully
+        ports:
+            # Direct access for curl, Insomnia and scripts/smoke-test.sh.
+            # Browsers go through the frontend instead.
+            - "3001:3000"
+
+    # The web UI (separate Next.js app in frontend/). It forwards every
+    # /api/* request to the `api` service over the compose network, so the
+    # browser only ever talks to this one origin.
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        restart: always
+        environment:
+            API_URL: http://api:3000
+        depends_on:
+            - api
+        ports:
+            - "3000:3000"
+
+volumes:
+    db_data:
