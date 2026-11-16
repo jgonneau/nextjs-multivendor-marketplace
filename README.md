@@ -252,6 +252,32 @@ The tests aren't in the hooks, because they need the database; CI runs them. To 
 
 `auth.cy.ts` isn't run in CI, because it needs the API and its database; run it locally with `pnpm e2e`.
 
+### Releases and changelog
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`). Nobody edits `CHANGELOG.md` by hand.
+
+1. Merge pull requests into `main` as usual.
+2. release-please opens, then keeps updating, a **release PR** (`chore(main): release x.y.z`). It bumps the version in `package.json` and `frontend/package.json` and adds the new section to `CHANGELOG.md`.
+3. When you want to release, merge the release PR. That creates the tag (`v0.2.0`) and the GitHub Release.
+
+The commit types decide the version bump. While the version is below 1.0.0, a breaking change (`feat!:`) bumps the minor version instead of jumping to 1.0.0.
+
+| Commit | Bump | Changelog section |
+| --- | --- | --- |
+| `feat` | minor | Features |
+| `fix`, `perf` | patch | Bug Fixes, Performance |
+| `feat!`, `fix!`, or a `BREAKING CHANGE:` footer | major | flagged as breaking |
+| `docs`, `refactor`, `revert` | patch | Documentation, Refactoring, Reverts |
+| `test`, `build`, `ci`, `chore`, `style` | none on their own | hidden |
+
+The API docs read their version from `package.json`, so <http://localhost:3001/> shows each new version as soon as it's released.
+
+**Setup, once:** enable *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*. The first release PR will be `0.1.0`, covering everything so far.
+
+**Squash merges:** if you squash pull requests, only the PR title reaches `main`, so the title must follow the commit convention too.
+
+**CI on the release PR:** pull requests opened with the default `GITHUB_TOKEN` don't trigger other workflows, so CI doesn't run on the release PR. It only changes version numbers and the changelog, which is fine. To have CI run anyway, give the action a personal access token (`token:` input).
+
 ## Architecture
 
 The API follows a **hexagonal architecture** (ports and adapters). The core holds the business rules and depends on nothing outside itself; everything else plugs into it through ports.

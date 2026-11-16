@@ -1,0 +1,36 @@
+# Release automation (https://github.com/googleapis/release-please).
+#
+# On every push to main, reads the Conventional Commits since the last release
+# and opens (or updates) a "release PR" that bumps the version in both
+# package.json files and adds the new section to CHANGELOG.md. Merging that PR
+# creates the git tag (v0.2.0, …) and the GitHub Release.
+#
+# Config: release-please-config.json. Current version: .release-please-manifest.json.
+#
+# Needs, once, in the repository settings: Settings → Actions → General →
+# "Allow GitHub Actions to create and approve pull requests".
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # tags, releases, the release branch
+  pull-requests: write # the release PR
+  issues: write # labels on the release PR
+
+# Never two release runs at once; a newer push waits rather than cancels,
+# so a release in progress always finishes.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
