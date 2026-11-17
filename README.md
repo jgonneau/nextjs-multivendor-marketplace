@@ -1,9 +1,25 @@
 # nextjs-multivendor-marketplace
 
-A REST API for a small marketplace. Users sign up, vendors register shops and list products, and customers place orders that vendors then fulfil.
+A REST API for a small marketplace. Users sign up, vendors register shops and list products, and customers place orders that vendors then fulfil. Built with **Next.js 15** (App Router route handlers), **TypeScript**, **Prisma 6** and **PostgreSQL**, following **Hexagonal Architecture**.
 
-Built with **Next.js 15** (App Router route handlers), **Prisma 6** and **PostgreSQL**, in TypeScript. An animated web UI that covers every API scenario lives in [`frontend/`](frontend/), as a separate Next.js app.
+<<<<<<< Updated upstream
+=======
+## Live demo
 
+Test here: <https://j-p.dev/marketplacedemo/>
+
+| View              | Signed in as                     | Starts on  | Pages                                     |
+| ----------------- | -------------------------------- | ---------- | ----------------------------------------- |
+| `/demo/customer`  | `camille@demo.shop` (CUSTOMER)   | Shop       | Shop, basket and checkout, orders         |
+| `/demo/vendor`    | `victor@demo.shop` (VENDOR)      | My shops   | My shops, products, incoming orders       |
+| `/demo/admin`     | `ada@demo.shop` (SUPERADMIN)     | All orders | Orders, users, catalog                    |
+
+- **Real pages, sample data.** The demo routes re-export the real pages. A demo session provider swaps the API client for an in-memory stand-in (`frontend/lib/demo/store.ts`) that holds 8 users, 4 shops, 9 products and 7 orders. It applies the same access rules as the API, so buttons appear and actions fail exactly as they would for that role.
+- **Nothing is saved.** Changes last until the page is reloaded. The banner's **Reset** button does exactly that. The demo never calls the API, so it works even when the API and database are down.
+- **Banner.** A strip above the navigation says it's a demo, switches between views (staying on the same page when the other role has it, such as Orders), resets the data, and exits back to `/demo`.
+- The admin view uses SUPERADMIN so that every edit and delete action is visible. Change `DEMO_IDENTITY` in `store.ts` to show a plain ADMIN instead.
+
+>>>>>>> Stashed changes
 ## Features
 
 - **JWT authentication.** Tokens are signed with `jose` and passwords are hashed with scrypt.
@@ -142,21 +158,6 @@ pnpm dev                  # UI on http://localhost:3000
 
 The frontend forwards `/api/*` to `http://localhost:3001` by default; set `API_URL` to point it elsewhere.
 
-## Demo
-
-<http://localhost:3000/demo> lets anyone see the frontend from each role's side without signing up. It is linked from the landing page and the footer.
-
-| View              | Signed in as                     | Starts on  | Pages                                     |
-| ----------------- | -------------------------------- | ---------- | ----------------------------------------- |
-| `/demo/customer`  | `camille@demo.shop` (CUSTOMER)   | Shop       | Shop, basket and checkout, orders         |
-| `/demo/vendor`    | `victor@demo.shop` (VENDOR)      | My shops   | My shops, products, incoming orders       |
-| `/demo/admin`     | `ada@demo.shop` (SUPERADMIN)     | All orders | Orders, users, catalog                    |
-
-- **Real pages, sample data.** The demo routes re-export the real pages. A demo session provider swaps the API client for an in-memory stand-in (`frontend/lib/demo/store.ts`) that holds 8 users, 4 shops, 9 products and 7 orders. It applies the same access rules as the API, so buttons appear and actions fail exactly as they would for that role.
-- **Nothing is saved.** Changes last until the page is reloaded. The banner's **Reset** button does exactly that. The demo never calls the API, so it works even when the API and database are down.
-- **Banner.** A strip above the navigation says it's a demo, switches between views (staying on the same page when the other role has it, such as Orders), resets the data, and exits back to `/demo`.
-- The admin view uses SUPERADMIN so that every edit and delete action is visible. Change `DEMO_IDENTITY` in `store.ts` to show a plain ADMIN instead.
-
 ## Scripts
 
 | Command                  | Description                                                  |
@@ -174,109 +175,6 @@ The frontend forwards `/api/*` to `http://localhost:3001` by default; set `API_U
 | `pnpm db:hash-passwords` | Hash any passwords still stored in plain text                |
 | `pnpm db:studio`         | Open Prisma Studio                                           |
 
-## Testing
-
-```bash
-pnpm test
-```
-
-The tests use Jest and need the PostgreSQL container running.
-
-- **Route tests** run against a separate `nextjs_multivendor_marketplace_test` database, configured in `.env.test`. It is rebuilt from the migrations on every run, so your development data is never touched. Each test creates its own records through the factories in `__test__/helpers/`.
-- **Access-control tests** in `middleware.test.ts` check every role against every protected endpoint.
-- **Use-case tests** in `core/application/*.test.ts` cover the business rules without a database. Each use case gets mock repositories from `__test__/helpers/mockRepositories.ts`, the real scrypt hasher, and a fake token issuer where it needs one.
-- **Adapter tests**:
-  - `adapters/persistence/prisma/errors.test.ts`: how Prisma errors become core errors or a 500.
-  - `adapters/persistence/prisma/unitOfWork.test.ts`: against the test database, a failed write rolls back the earlier ones.
-  - `adapters/http/accessRules.test.ts`: the role rules.
-  - `adapters/http/openapi.test.ts`: the API docs match the routes, DTOs, validation and access rules.
-  - `adapters/security/password.test.ts`: hashing.
-- **Contract test** in `__test__/frontend-contract.test.ts` checks that the frontend's copy of the access rules gives the same answers as the API's. A type check (`pnpm exec tsc --noEmit`) also confirms that the frontend's response types match the response DTOs in `adapters/http/dto.ts`.
-
-For an end-to-end check against a running API, use `./scripts/smoke-test.sh` (defaults to `http://localhost:3001`).
-
-### End-to-end tests (frontend)
-
-Cypress tests in `frontend/cypress/e2e/` drive the frontend in a real browser. Start the stack first (`docker compose up -d --build`), then:
-
-```bash
-cd frontend
-pnpm exec cypress install   # once per machine: downloads the Cypress binary
-pnpm e2e                    # all specs, headless
-pnpm e2e:demo               # only the specs that don't need the API
-pnpm e2e:open               # interactive runner
-```
-
-| Spec                   | Needs    | Covers                                                                                      |
-| ---------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `landing.cy.ts`        | frontend | Language switch, scroll cue, gallery, demo link, no sideways scroll on 320px phones   |
-| `demo-chooser.cy.ts`   | frontend | View cards, each view's start page, 404 for unknown views, view switcher, exit and sign-out |
-| `demo-customer.cy.ts`  | frontend | Search and shop filter, out-of-stock items, checkout split into one order per shop, Reset   |
-| `demo-vendor.cy.ts`    | frontend | Own shops only, adding a product, opening a shop (duplicate names refused), delivery update |
-| `demo-admin.cy.ts`     | frontend | All orders and details, editing and deleting users, catalog deletes and their refusals      |
-| `auth.cy.ts`           | API      | Redirect to sign-in and back, sign-up, sign-out, form checks, duplicate email, wrong password |
-
-- The tests run against <http://localhost:3000>; set `CYPRESS_BASE_URL` to test another address.
-- `auth.cy.ts` uses the real API and the development database. It creates accounts named `e2e-…@example.test` and deletes them afterwards with `docker exec` on the `nextjs-multivendor-marketplace-db-1` container (override with `CYPRESS_dbContainer`, `CYPRESS_dbUser` and `CYPRESS_dbName`). It is skipped when the API is down.
-- Every test starts in English, and the gallery's remote photos are blocked, so runs don't depend on the network.
-- The Cypress files are excluded from the frontend's type check and Docker image.
-
-## Contributing
-
-### Branches and commits
-
-- **Branch names:** `<type>/<description>`, lowercase, e.g. `feature/add-cart-summary` or `bugfix/fix-login-redirect`. Types: `feature`, `bugfix`, `hotfix`, `refactor`, `chore`, `docs`, `test`, `experiment`, `release`. Commits on `main` are refused; work on a branch and merge it. Check a name with `scripts/check-branch-name.sh <name>`.
-- **Commit messages:** [Conventional Commits](https://www.conventionalcommits.org/), `type(scope): subject`, e.g. `feat(core): split orders per shop`. Usual scopes: `core`, `adapters`, `http`, `api`, `db`, `docs`, `frontend`, `e2e`, `docker`, `ci`, `deps` (another scope is a warning, not an error). The commit-msg hook checks the format locally; CI checks every commit of a pull request with commitlint (`commitlint.config.mjs`).
-
-### Git hooks
-
-`pnpm install` installs them (with [Husky](https://typicode.github.io/husky/)):
-
-| Hook | Runs | Time |
-| --- | --- | --- |
-| `commit-msg` | The first line matches `type(scope): description`. It also refuses local merge commits named `Merge branch …`, so fast-forward, or reword the message (`chore: merge feature/x`) | instant |
-| `pre-commit` | Branch-name check (refuses `main`), then `npm run precommit`: ESLint `--fix` on the staged files of each app ([lint-staged](https://github.com/lint-staged/lint-staged)) | a few seconds |
-| `pre-push` | Branch-name check (here `main` is allowed, so merged work can be pushed), then a typecheck of the API and the frontend | a few seconds |
-
-The tests aren't in the hooks, because they need the database; CI runs them. To skip the hooks once (e.g. a work-in-progress commit), use `git commit --no-verify`. CI still checks everything.
-
-### Continuous integration
-
-`.github/workflows/ci.yml` runs on every pull request and every push to `main`:
-
-| Job | Checks |
-| --- | --- |
-| Commit and branch conventions (pull requests only) | Every commit in the PR passes commitlint; the branch name follows the convention |
-| API | Lint, typecheck, the Jest suite against a PostgreSQL service, production build |
-| Frontend | Lint, typecheck, production build, then the Cypress landing and demo specs against the built app (they need no API) |
-
-`auth.cy.ts` isn't run in CI, because it needs the API and its database; run it locally with `pnpm e2e`.
-
-### Releases and changelog
-
-Releases are automated with [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`). Nobody edits `CHANGELOG.md` by hand.
-
-1. Merge pull requests into `main` as usual.
-2. release-please opens, then keeps updating, a **release PR** (`chore(main): release x.y.z`). It bumps the version in `package.json` and `frontend/package.json` and adds the new section to `CHANGELOG.md`.
-3. When you want to release, merge the release PR. That creates the tag (`v0.2.0`) and the GitHub Release.
-
-The commit types decide the version bump. While the version is below 1.0.0, a breaking change (`feat!:`) bumps the minor version instead of jumping to 1.0.0.
-
-| Commit | Bump | Changelog section |
-| --- | --- | --- |
-| `feat` | minor | Features |
-| `fix`, `perf` | patch | Bug Fixes, Performance |
-| `feat!`, `fix!`, or a `BREAKING CHANGE:` footer | major | flagged as breaking |
-| `docs`, `refactor`, `revert` | patch | Documentation, Refactoring, Reverts |
-| `test`, `build`, `ci`, `chore`, `style` | none on their own | hidden |
-
-The API docs read their version from `package.json`, so <http://localhost:3001/> shows each new version as soon as it's released.
-
-**Setup, once:** enable *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*. The first release PR will be `0.1.0`, covering everything so far.
-
-**Squash merges:** if you squash pull requests, only the PR title reaches `main`, so the title must follow the commit convention too.
-
-**CI on the release PR:** pull requests opened with the default `GITHUB_TOKEN` don't trigger other workflows, so CI doesn't run on the release PR. It only changes version numbers and the changelog, which is fine. To have CI run anyway, give the action a personal access token (`token:` input).
 
 ## Architecture
 
@@ -343,11 +241,88 @@ frontend/         Web UI: a separate Next.js app with its own Dockerfile
   cypress/          End-to-end tests
 ```
 
-## Deploying
+## Testing
 
-### Fresh environment
+```bash
+pnpm test
+```
 
-1. Set `DATABASE_URL`, `AUTH_SECRET` and `LOG_TOKEN_SECRET` in the platform's environment settings. Generate secrets with `openssl rand -base64 48`, and never reuse the local ones.
-2. Apply the migrations: `pnpm db:deploy`.
-3. Deploy the frontend with `API_URL` set to the API's internal address. The API itself doesn't need to be public.
-4. Don't run `pnpm db:seed` here. The seed accounts in `prisma/seed.sql` have publicly known demo passwords, including a SUPERADMIN.
+The tests use Jest and need the PostgreSQL container running.
+
+- **Route tests** run against a separate `nextjs_multivendor_marketplace_test` database, configured in `.env.test`. It is rebuilt from the migrations on every run, so your development data is never touched. Each test creates its own records through the factories in `__test__/helpers/`.
+- **Access-control tests** in `middleware.test.ts` check every role against every protected endpoint.
+- **Use-case tests** in `core/application/*.test.ts` cover the business rules without a database. Each use case gets mock repositories from `__test__/helpers/mockRepositories.ts`, the real scrypt hasher, and a fake token issuer where it needs one.
+- **Adapter tests**:
+  - `adapters/persistence/prisma/errors.test.ts`: how Prisma errors become core errors or a 500.
+  - `adapters/persistence/prisma/unitOfWork.test.ts`: against the test database, a failed write rolls back the earlier ones.
+  - `adapters/http/accessRules.test.ts`: the role rules.
+  - `adapters/http/openapi.test.ts`: the API docs match the routes, DTOs, validation and access rules.
+  - `adapters/security/password.test.ts`: hashing.
+- **Contract test** in `__test__/frontend-contract.test.ts` checks that the frontend's copy of the access rules gives the same answers as the API's. A type check (`pnpm exec tsc --noEmit`) also confirms that the frontend's response types match the response DTOs in `adapters/http/dto.ts`.
+
+For an end-to-end check against a running API, use `./scripts/smoke-test.sh` (defaults to `http://localhost:3001`).
+
+
+### End-to-end tests (frontend)
+
+Cypress tests in `frontend/cypress/e2e/` drive the frontend in a real browser. Start the stack first (`docker compose up -d --build`), then:
+
+```bash
+cd frontend
+pnpm exec cypress install   # once per machine: downloads the Cypress binary
+pnpm e2e                    # all specs, headless
+pnpm e2e:demo               # only the specs that don't need the API
+pnpm e2e:open               # interactive runner
+```
+
+| Spec                   | Needs    | Covers                                                                                      |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `landing.cy.ts`        | frontend | Language switch, scroll cue, gallery, demo link, no sideways scroll on 320px phones   |
+| `demo-chooser.cy.ts`   | frontend | View cards, each view's start page, 404 for unknown views, view switcher, exit and sign-out |
+| `demo-customer.cy.ts`  | frontend | Search and shop filter, out-of-stock items, checkout split into one order per shop, Reset   |
+| `demo-vendor.cy.ts`    | frontend | Own shops only, adding a product, opening a shop (duplicate names refused), delivery update |
+| `demo-admin.cy.ts`     | frontend | All orders and details, editing and deleting users, catalog deletes and their refusals      |
+| `auth.cy.ts`           | API      | Redirect to sign-in and back, sign-up, sign-out, form checks, duplicate email, wrong password |
+
+- The tests run against <http://localhost:3000>; set `CYPRESS_BASE_URL` to test another address.
+- `auth.cy.ts` uses the real API and the development database. It creates accounts named `e2e-…@example.test` and deletes them afterwards with `docker exec` on the `nextjs-multivendor-marketplace-db-1` container (override with `CYPRESS_dbContainer`, `CYPRESS_dbUser` and `CYPRESS_dbName`). It is skipped when the API is down.
+- Every test starts in English, and the gallery's remote photos are blocked, so runs don't depend on the network.
+- The Cypress files are excluded from the frontend's type check and Docker image.
+
+
+## Contributing
+
+### Branches and commits
+
+- **Branch names:** `<type>/<description>`, lowercase, e.g. `feature/add-cart-summary` or `bugfix/fix-login-redirect`. Types: `feature`, `bugfix`, `hotfix`, `refactor`, `chore`, `docs`, `test`, `experiment`, `release`. Commits on `main` are refused; work on a branch and merge it. Check a name with `scripts/check-branch-name.sh <name>`.
+- **Commit messages:** [Conventional Commits](https://www.conventionalcommits.org/), `type(scope): subject`, e.g. `feat(core): split orders per shop`. Usual scopes: `core`, `adapters`, `http`, `api`, `db`, `docs`, `frontend`, `e2e`, `docker`, `ci`, `deps` (another scope is a warning, not an error). The commit-msg hook checks the format locally; CI checks every commit of a pull request with commitlint (`commitlint.config.mjs`).
+
+### Git hooks
+
+`pnpm install` installs them (with [Husky](https://typicode.github.io/husky/)):
+
+| Hook | Runs | Time |
+| --- | --- | --- |
+| `commit-msg` | The first line matches `type(scope): description`. It also refuses local merge commits named `Merge branch …`, so fast-forward, or reword the message (`chore: merge feature/x`) | instant |
+| `pre-commit` | Branch-name check (refuses `main`), then `npm run precommit`: ESLint `--fix` on the staged files of each app ([lint-staged](https://github.com/lint-staged/lint-staged)) | a few seconds |
+| `pre-push` | Branch-name check (here `main` is allowed, so merged work can be pushed), then a typecheck of the API and the frontend | a few seconds |
+
+The tests aren't in the hooks, because they need the database; CI runs them. To skip the hooks once (e.g. a work-in-progress commit), use `git commit --no-verify`. CI still checks everything.
+
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`:
+
+| Job | Checks |
+| --- | --- |
+| Commit and branch conventions (pull requests only) | Every commit in the PR passes commitlint; the branch name follows the convention |
+| API | Lint, typecheck, the Jest suite against a PostgreSQL service, production build |
+| Frontend | Lint, typecheck, production build, then the Cypress landing and demo specs against the built app (they need no API) |
+
+`auth.cy.ts` isn't run in CI, because it needs the API and its database; run it locally with `pnpm e2e`.
+
+
+### Releases and changelog
+
+Changelog and releases are automated with [release-please](https://github.com/googleapis/release-please) (`.github/workflows/release-please.yml`).
