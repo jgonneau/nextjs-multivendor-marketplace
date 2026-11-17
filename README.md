@@ -4,6 +4,22 @@ A REST API for a small marketplace. Users sign up, vendors register shops and li
 
 Built with **Next.js 15** (App Router route handlers), **Prisma 6** and **PostgreSQL**, in TypeScript. An animated web UI that covers every API scenario lives in [`frontend/`](frontend/), as a separate Next.js app.
 
+## Live demo
+
+Test here: <https://j-p.dev/marketplacedemo/>
+
+| View              | Signed in as                     | Starts on  | Pages                                     |
+| ----------------- | -------------------------------- | ---------- | ----------------------------------------- |
+| `/demo/customer`  | `camille@demo.shop` (CUSTOMER)   | Shop       | Shop, basket and checkout, orders         |
+| `/demo/vendor`    | `victor@demo.shop` (VENDOR)      | My shops   | My shops, products, incoming orders       |
+| `/demo/admin`     | `ada@demo.shop` (SUPERADMIN)     | All orders | Orders, users, catalog                    |
+
+- **Real pages, sample data.** The demo routes re-export the real pages. A demo session provider swaps the API client for an in-memory stand-in (`frontend/lib/demo/store.ts`) that holds 8 users, 4 shops, 9 products and 7 orders. It applies the same access rules as the API, so buttons appear and actions fail exactly as they would for that role.
+- **Nothing is saved.** Changes last until the page is reloaded. The banner's **Reset** button does exactly that. The demo never calls the API, so it works even when the API and database are down.
+- **Banner.** A strip above the navigation says it's a demo, switches between views (staying on the same page when the other role has it, such as Orders), resets the data, and exits back to `/demo`.
+- The admin view uses SUPERADMIN so that every edit and delete action is visible. Change `DEMO_IDENTITY` in `store.ts` to show a plain ADMIN instead.
+
+
 ## Features
 
 - **JWT authentication.** Tokens are signed with `jose` and passwords are hashed with scrypt.
