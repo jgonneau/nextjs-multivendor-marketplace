@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.1](https://github.com/jgonneau/nextjs-multivendor-marketplace/compare/v0.1.0...v0.1.1) (2026-11-17)
+
+
+### Documentation
+
+* adding live demo link in README.md ([7a7660c](https://github.com/jgonneau/nextjs-multivendor-marketplace/commit/7a7660ccb0fe0bdae386bc6490db6b1bf7b98c46))
+* adding live demo link in README.md ([8051f20](https://github.com/jgonneau/nextjs-multivendor-marketplace/commit/8051f20274affc2d1cbd57562788043d8376e7a8))
+* move architecture up in the README && removing some useless parts ([e6443b4](https://github.com/jgonneau/nextjs-multivendor-marketplace/commit/e6443b407c6800664610a576bf39ce5b1e823586))
+* move architecture up in the README && removing some useless parts ([d8a3e40](https://github.com/jgonneau/nextjs-multivendor-marketplace/commit/d8a3e40e57783b85256babfb4d7c328dab8d0118))
+
 ## 0.1.0 (2026-11-16)
 
 
