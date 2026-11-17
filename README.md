@@ -2,8 +2,6 @@
 
 A REST API for a small marketplace. Users sign up, vendors register shops and list products, and customers place orders that vendors then fulfil. Built with **Next.js 15** (App Router route handlers), **TypeScript**, **Prisma 6** and **PostgreSQL**, following **Hexagonal Architecture**.
 
-<<<<<<< Updated upstream
-=======
 ## Live demo
 
 Test here: <https://j-p.dev/marketplacedemo/>
@@ -19,7 +17,6 @@ Test here: <https://j-p.dev/marketplacedemo/>
 - **Banner.** A strip above the navigation says it's a demo, switches between views (staying on the same page when the other role has it, such as Orders), resets the data, and exits back to `/demo`.
 - The admin view uses SUPERADMIN so that every edit and delete action is visible. Change `DEMO_IDENTITY` in `store.ts` to show a plain ADMIN instead.
 
->>>>>>> Stashed changes
 ## Features
 
 - **JWT authentication.** Tokens are signed with `jose` and passwords are hashed with scrypt.
